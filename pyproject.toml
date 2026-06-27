@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "alembic-adapter-sdk"
+version = "0.1.0"
+description = "SDK for writing alembic external adapters in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "cyberwitchery lab", email = "contact@cyberwitchery.com" }]
+keywords = ["alembic", "dcim", "ipam", "network-automation", "adapter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Networking",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/cyberwitchery/alembic-adapter-sdk-python"
+Repository = "https://github.com/cyberwitchery/alembic-adapter-sdk-python"
+"alembic (core)" = "https://github.com/cyberwitchery/alembic"
+
+[project.optional-dependencies]
+dev = ["coverage[toml]", "ruff"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/alembic_adapter"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.coverage.run]
+source = ["alembic_adapter"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

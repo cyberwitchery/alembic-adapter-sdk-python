@@ -1,0 +1,23 @@
+# wire this adapter into alembic as an external backend, e.g.:
+#
+#   alembic plan  --backend external --backend-config examples/backend.yaml \
+#     -f inventory.yaml -o plan.json
+#   alembic apply --backend external --backend-config examples/backend.yaml \
+#     -p plan.json
+#
+backend: external
+
+# how alembic launches the adapter. once the package is installed you can also
+# expose a console script and point `command` at that instead.
+command: python3
+args: ["examples/example_adapter.py"]
+
+# optional process controls (defaults shown commented out):
+# working_dir: .
+# env:
+#   MY_BACKEND_TOKEN: $TOKEN
+# timeout_seconds: 120
+
+# the `setup:` block is handed verbatim to Adapter.setup (as parsed JSON).
+setup:
+  host: http://localhost:8080

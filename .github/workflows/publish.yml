@@ -1,0 +1,38 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: build
+        run: |
+          pip install build
+          python -m build
+      - name: generate sbom
+        run: |
+          pip install cyclonedx-bom
+          python -m pip freeze --all | cyclonedx-py requirements - --pyproject pyproject.toml -o "/tmp/sbom-${{ github.ref_name }}.cdx.json"
+      - name: upload sbom
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-${{ github.ref_name }}
+          path: /tmp/sbom-${{ github.ref_name }}.cdx.json
+      - name: attach sbom to release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: /tmp/sbom-${{ github.ref_name }}.cdx.json
+      - name: publish to pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
