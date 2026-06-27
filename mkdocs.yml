@@ -1,0 +1,20 @@
+site_name: alembic-adapter-sdk
+site_url: https://alembic-adapter-sdk.readthedocs.io
+repo_url: https://github.com/cyberwitchery/alembic-adapter-sdk-python
+repo_name: cyberwitchery/alembic-adapter-sdk-python
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+
+nav:
+  - home: index.md
+  - writing an adapter: writing-an-adapter.md
+  - protocol reference: protocol.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
