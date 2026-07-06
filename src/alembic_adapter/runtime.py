@@ -61,6 +61,17 @@ class Adapter:
         """Provision backend schema before apply. Defaults to a no-op."""
         return ProvisionReport()
 
+    def preview_schema(self, schema: Schema) -> ProvisionReport | None:
+        """Preview what :meth:`ensure_schema` would provision, writing nothing.
+
+        Called by the host at plan time so the plan can show pending schema
+        changes before apply. Return a :class:`ProvisionReport` describing the
+        creates/deletes ``ensure_schema`` would perform, or ``None`` if this
+        adapter cannot preview (the default), which the host reports as
+        "schema preview: unavailable for this backend".
+        """
+        return None
+
 
 def run(adapter: Adapter, *, stdin: TextIO | None = None, stdout: TextIO | None = None) -> None:
     """Run a single request/response cycle for ``adapter`` over stdio.
@@ -116,6 +127,12 @@ def _dispatch(adapter: Adapter, envelope: dict) -> dict:
         schema = Schema.from_json(envelope.get("schema"))
         report = adapter.ensure_schema(schema)
         return _ok(report.to_json())
+    if method == "preview_schema":
+        schema = Schema.from_json(envelope.get("schema"))
+        report = adapter.preview_schema(schema)
+        # a null result is the canonical "cannot preview" signal the host maps to
+        # Ok(None); a report is what ensure_schema would provision.
+        return _ok(None if report is None else report.to_json())
     return _error(f"unknown method: {method!r}")
 
 

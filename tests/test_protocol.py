@@ -166,6 +166,32 @@ class EnsureSchemaTests(unittest.TestCase):
         )
 
 
+class PreviewSchemaTests(unittest.TestCase):
+    def test_default_preview_schema_is_null(self):
+        # the default adapter cannot preview: a null result is the canonical
+        # "unavailable" signal the host maps to Ok(None).
+        resp = call(Adapter(), envelope("preview_schema", schema={"types": {}}))
+        self.assertEqual(resp, {"ok": True, "result": None})
+
+    def test_preview_schema_returns_report_when_implemented(self):
+        class Previewing(Adapter):
+            def preview_schema(self, schema):
+                return ProvisionReport(created_object_types=["dcim.site"])
+
+        resp = call(Previewing(), envelope("preview_schema", schema={"types": {}}))
+        self.assertEqual(
+            resp,
+            {
+                "ok": True,
+                "result": {
+                    "created_fields": [],
+                    "created_tags": [],
+                    "created_object_types": ["dcim.site"],
+                },
+            },
+        )
+
+
 class ProtocolGuardTests(unittest.TestCase):
     def test_version_mismatch_is_rejected(self):
         req = {"version": PROTOCOL_VERSION + 1, "method": "read", "schema": {"types": {}}}
