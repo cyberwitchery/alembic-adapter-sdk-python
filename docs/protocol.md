@@ -7,11 +7,16 @@ so you rarely touch the raw json.
 
 ## methods
 
-| method          | you receive                | you return             |
-| --------------- | -------------------------- | ---------------------- |
-| `read`          | `schema`, `types`, `state` | `list[ExternalObject]` |
-| `write`         | `schema`, `ops`, `state`   | `ApplyReport`          |
-| `ensure_schema` | `schema`                   | `ProvisionReport`      |
+| method           | you receive                | you return                  |
+| ---------------- | -------------------------- | --------------------------- |
+| `read`           | `schema`, `types`, `state` | `list[ExternalObject]`      |
+| `write`          | `schema`, `ops`, `state`   | `ApplyReport`               |
+| `ensure_schema`  | `schema`                   | `ProvisionReport`           |
+| `preview_schema` | `schema`                   | `ProvisionReport` or `None` |
+
+`preview_schema` is called at plan time to show what `ensure_schema` would
+provision without writing; return `None` (the default) if your adapter cannot
+preview.
 
 `setup` is the `setup:` block from the backend config (parsed json, usually a
 dict); `Adapter.setup` is called once before each request, ahead of the method.
