@@ -296,8 +296,9 @@ class ProvisionReport:
     deleted_object_fields: list[str] = field(default_factory=list)
 
     def to_json(self) -> dict:
-        # created_fields/created_tags are always emitted (the host requires
-        # them); the rest are omitted when empty.
+        # every field is optional on the host side (serde defaults); emit
+        # created_fields/created_tags unconditionally as the common case and
+        # omit the rest when empty to keep responses small.
         out: dict = {"created_fields": self.created_fields, "created_tags": self.created_tags}
         for name in (
             "created_object_types",
