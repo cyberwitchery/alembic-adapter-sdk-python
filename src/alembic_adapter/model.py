@@ -315,6 +315,26 @@ class ProvisionReport:
 
 
 @dataclass
+class Capabilities:
+    """The adapter's role, reported to the host by ``capabilities``.
+
+    ``role`` is one of ``"adapter"`` (read+write, the default), ``"emitter"``
+    (write-only), or ``"observer"`` (read-only).
+    """
+
+    role: str = "adapter"
+
+    _VALID_ROLES = frozenset({"adapter", "emitter", "observer"})
+
+    def to_json(self) -> dict:
+        if self.role not in self._VALID_ROLES:
+            raise ValueError(
+                f"invalid role {self.role!r}, expected one of {sorted(self._VALID_ROLES)}"
+            )
+        return {"role": self.role}
+
+
+@dataclass
 class ApplyReport:
     """Aggregated result of a ``write``: the ops applied plus any provisioning."""
 

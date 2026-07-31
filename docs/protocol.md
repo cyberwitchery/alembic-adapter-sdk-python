@@ -13,10 +13,16 @@ so you rarely touch the raw json.
 | `write`          | `schema`, `ops`, `state`   | `ApplyReport`               |
 | `ensure_schema`  | `schema`                   | `ProvisionReport`           |
 | `preview_schema` | `schema`                   | `ProvisionReport` or `None` |
+| `capabilities`   | nothing                    | `Capabilities`              |
 
 `preview_schema` is called at plan time to show what `ensure_schema` would
 provision without writing; return `None` (the default) if your adapter cannot
 preview.
+
+`capabilities` is called once when the host constructs the backend. it reports
+the adapter's role: `adapter` (read+write, the default), `emitter` (write-only),
+or `observer` (read-only). an adapter that answers `capabilities` with an error
+defaults to `adapter` on the host side.
 
 `setup` is the `setup:` block from the backend config (parsed json, usually a
 dict); `Adapter.setup` is called once before each request, ahead of the method.
@@ -37,6 +43,8 @@ the typed model mirrors alembic's ir:
   an optional `backend_id`.
 - **`AppliedOp`** records one applied operation in an `ApplyReport`: `uid`,
   `type_name`, and an optional `backend_id`.
+- **`Capabilities`** is what `capabilities` returns: a `role` of `"adapter"`,
+  `"emitter"`, or `"observer"`.
 - **`State`** holds the engine's `uid -> backend_id` mappings.
   `state.backend_id(type_name, uid)` looks up an object's existing backend id,
   so renames stay stable.

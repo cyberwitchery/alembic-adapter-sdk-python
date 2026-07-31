@@ -7,7 +7,8 @@ subprocess and speaks JSON over stdin/stdout.
 Wire it in with a backend config like ``examples/backend.yaml``:
 
     backend: external
-    command: python3 examples/example_adapter.py
+    command: python3
+    args: ["examples/example_adapter.py"]
     setup:
       host: http://localhost:8080
 
@@ -75,6 +76,10 @@ class ExampleAdapter(Adapter):
     # optional: provision backend schema (custom fields, types, ...) before
     # apply. the base class default returns an empty ProvisionReport; override
     # ensure_schema if your backend needs setting up first.
+
+    # optional: report the adapter's role. the base class default reports the
+    # full read+write "adapter" role; an emit-only adapter returns
+    # Capabilities(role="emitter") instead.
 
 
 if __name__ == "__main__":

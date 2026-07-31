@@ -15,6 +15,7 @@ from typing import Any, TextIO
 from .model import (
     PROTOCOL_VERSION,
     ApplyReport,
+    Capabilities,
     ExternalObject,
     Op,
     ProvisionReport,
@@ -69,8 +70,24 @@ class Adapter:
         creates/deletes ``ensure_schema`` would perform, or ``None`` if this
         adapter cannot preview (the default), which the host reports as
         "schema preview: unavailable for this backend".
+
+        The report's ``deleted_object_types``/``deleted_object_fields`` feed
+        the host's destructive-provisioning gate, so list any schema
+        ``ensure_schema`` would drop. A ``None`` result skips that gate.
         """
         return None
+
+    def capabilities(self) -> Capabilities:
+        """Report which side of the adapter contract this adapter implements.
+
+        The default, the full read+write ``"adapter"`` role, is also what the
+        host assumes when ``capabilities`` goes unanswered. An emit-only
+        adapter returns ``Capabilities(role="emitter")`` so the host plans
+        every object as a create and rejects ``import`` up front; a read-only
+        one returns ``Capabilities(role="observer")`` so ``apply`` is
+        rejected.
+        """
+        return Capabilities()
 
 
 def run(adapter: Adapter, *, stdin: TextIO | None = None, stdout: TextIO | None = None) -> None:
@@ -133,6 +150,8 @@ def _dispatch(adapter: Adapter, envelope: dict) -> dict:
         # a null result is the canonical "cannot preview" signal the host maps to
         # Ok(None); a report is what ensure_schema would provision.
         return _ok(None if report is None else report.to_json())
+    if method == "capabilities":
+        return _ok(adapter.capabilities().to_json())
     return _error(f"unknown method: {method!r}")
 
 

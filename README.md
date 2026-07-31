@@ -76,10 +76,15 @@ the payload into typed objects and serializes your results back:
 | `write`          | `schema`, `ops`, `state`          | `ApplyReport`                 |
 | `ensure_schema`  | `schema`                          | `ProvisionReport`             |
 | `preview_schema` | `schema`                          | `ProvisionReport` or `None`   |
+| `capabilities`   | nothing                           | `Capabilities`                |
 
 `preview_schema` is called at plan time to show what `ensure_schema` would
 provision without writing; return `None` (the default) if your adapter cannot
 preview.
+
+`capabilities` reports the adapter's role: `adapter` (read+write, the default),
+`emitter` (write-only), or `observer` (read-only), so the host can reject
+`import`/`apply` up front instead of calling into a side that does nothing.
 
 `setup` is the `setup:` block from the backend config (parsed json, usually a
 dict); `Adapter.setup` is called once before each request.

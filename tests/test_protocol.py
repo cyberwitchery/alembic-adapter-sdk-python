@@ -14,6 +14,7 @@ from alembic_adapter import (
     Adapter,
     AppliedOp,
     ApplyReport,
+    Capabilities,
     Create,
     Delete,
     ExternalObject,
@@ -190,6 +191,29 @@ class PreviewSchemaTests(unittest.TestCase):
                 },
             },
         )
+
+
+class CapabilitiesTests(unittest.TestCase):
+    def test_capabilities_defaults_to_adapter_role(self):
+        resp = call(Adapter(), envelope("capabilities"))
+        self.assertEqual(resp, {"ok": True, "result": {"role": "adapter"}})
+
+    def test_capabilities_emitter_override(self):
+        class EmitOnly(Adapter):
+            def capabilities(self):
+                return Capabilities(role="emitter")
+
+        resp = call(EmitOnly(), envelope("capabilities"))
+        self.assertEqual(resp, {"ok": True, "result": {"role": "emitter"}})
+
+    def test_capabilities_invalid_role_is_an_error(self):
+        class Broken(Adapter):
+            def capabilities(self):
+                return Capabilities(role="scribe")
+
+        resp = call(Broken(), envelope("capabilities"))
+        self.assertFalse(resp["ok"])
+        self.assertIn("invalid role", resp["error"])
 
 
 class ProtocolGuardTests(unittest.TestCase):

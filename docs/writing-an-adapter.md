@@ -68,10 +68,27 @@ across renames.
 it defaults to a no-op; override it and return a `ProvisionReport` if your
 backend needs setting up first.
 
+`preview_schema` is called at plan time to show what `ensure_schema` would
+provision, writing nothing. it defaults to `None` ("cannot preview"); if you
+implement `ensure_schema`, implement this too and return the report it would
+produce. the report's `deleted_object_types`/`deleted_object_fields` feed the
+host's destructive-provisioning gate, so list any schema you would drop.
+
+`capabilities` reports which side of the contract the adapter implements. the
+default is the full read+write `adapter` role; an emit-only adapter overrides it
+so the host plans every object as a create and rejects `import` up front:
+
+```python
+from alembic_adapter import Capabilities
+
+def capabilities(self):
+    return Capabilities(role="emitter")
+```
+
 ## errors
 
-you do not need to catch your own errors. any exception raised in `setup`,
-`read`, `write`, or `ensure_schema` is turned into a well-formed
+you do not need to catch your own errors. any exception raised in `setup` or a
+method implementation is turned into a well-formed
 `{"ok": false, "error": "<message>"}` response, and the alembic host surfaces it.
 
 ## wiring into alembic
