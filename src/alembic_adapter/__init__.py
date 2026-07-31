@@ -45,7 +45,7 @@ from .model import (
 )
 from .runtime import Adapter, run
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "PROTOCOL_VERSION",
