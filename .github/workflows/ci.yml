@@ -56,9 +56,39 @@ jobs:
       - run: python -m pip install --upgrade build
       - run: python -m build
 
+  # protocol conformance: the runner that ships alongside alembic drives the
+  # example adapter through the external-adapter contract.
+  conformance:
+    name: conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: install package
+        run: pip install -e .
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cache the conformance runner
+        id: cache
+        uses: actions/cache@v6
+        with:
+          path: bin/alembic-adapter-test
+          key: alembic-adapter-test-${{ runner.os }}-0.8.0
+      - name: build alembic-adapter-test
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cargo install alembic-adapter-test --version "=0.8.0" --debug --locked \
+            --root "${RUNNER_TEMP}/cargo"
+          mkdir -p bin
+          cp "${RUNNER_TEMP}/cargo/bin/alembic-adapter-test" bin/alembic-adapter-test
+          strip bin/alembic-adapter-test
+      - name: run conformance
+        run: ./bin/alembic-adapter-test -- python examples/example_adapter.py
+
   success:
     name: success
-    needs: [test, lint, build]
+    needs: [test, lint, build, conformance]
     runs-on: ubuntu-latest
     if: always()
     steps:
