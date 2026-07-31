@@ -6,6 +6,7 @@ from your `__main__`.
 ```python
 from alembic_adapter import Adapter, ApplyReport, AppliedOp, Create, run
 
+
 class MyAdapter(Adapter):
     def setup(self, config):
         self.host = (config or {}).get("host", "http://localhost:8080")
@@ -20,6 +21,7 @@ class MyAdapter(Adapter):
                 ...  # create op.desired on the backend
             report.applied.append(AppliedOp(uid=op.uid, type_name=op.type_name))
         return report
+
 
 if __name__ == "__main__":
     run(MyAdapter())
@@ -43,6 +45,7 @@ type with `isinstance`:
 ```python
 from alembic_adapter import Create, Update, Delete
 
+
 def write(self, schema, ops, state):
     report = ApplyReport()
     for op in ops:
@@ -54,9 +57,7 @@ def write(self, schema, ops, state):
         elif isinstance(op, Delete):
             self.delete(op.backend_id)
             backend_id = op.backend_id
-        report.applied.append(
-            AppliedOp(uid=op.uid, type_name=op.type_name, backend_id=backend_id)
-        )
+        report.applied.append(AppliedOp(uid=op.uid, type_name=op.type_name, backend_id=backend_id))
     return report
 ```
 
@@ -80,6 +81,7 @@ so the host plans every object as a create and rejects `import` up front:
 
 ```python
 from alembic_adapter import Capabilities
+
 
 def capabilities(self):
     return Capabilities(role="emitter")

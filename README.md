@@ -34,6 +34,7 @@ subclass `Adapter`, implement the methods your backend needs, and call `run`:
 ```python
 from alembic_adapter import Adapter, ApplyReport, AppliedOp, Create, run
 
+
 class MyAdapter(Adapter):
     def setup(self, config):
         # `config` is the parsed `setup:` block from the backend config.
@@ -53,6 +54,7 @@ class MyAdapter(Adapter):
                 ...  # create op.desired on the backend
             report.applied.append(AppliedOp(uid=op.uid, type_name=op.type_name))
         return report
+
 
 if __name__ == "__main__":
     run(MyAdapter())

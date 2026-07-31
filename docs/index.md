@@ -26,6 +26,7 @@ the sdk has no runtime dependencies; it speaks json with the stdlib.
 ```python
 from alembic_adapter import Adapter, ApplyReport, AppliedOp, Create, run
 
+
 class MyAdapter(Adapter):
     def setup(self, config):
         # `config` is the parsed `setup:` block from the backend config.
@@ -38,6 +39,7 @@ class MyAdapter(Adapter):
                 ...  # create op.desired on the backend
             report.applied.append(AppliedOp(uid=op.uid, type_name=op.type_name))
         return report
+
 
 if __name__ == "__main__":
     run(MyAdapter())
