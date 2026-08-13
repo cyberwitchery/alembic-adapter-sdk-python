@@ -64,8 +64,10 @@ if __name__ == "__main__":
 newline-terminated json response to stdout. any exception your adapter raises is
 turned into a well-formed `{"ok": false, "error": ...}` response.
 
-see [`examples/example_adapter.py`](examples/example_adapter.py) for a complete,
-copyable starting point.
+see [`examples/example_adapter.py`](examples/example_adapter.py) for a copyable
+starting point, and [`examples/json_store_adapter.py`](examples/json_store_adapter.py)
+for a finished adapter: it keeps objects in a json file, implements every method
+of the contract, and converges under `alembic plan`/`apply`.
 
 ## the protocol
 
@@ -147,6 +149,20 @@ coverage report
 ruff check
 ruff format --check
 ```
+
+the unit tests assert json shapes on their own, so ci also checks the sdk against
+the real host, pinned to one alembic release:
+
+```bash
+# protocol conformance, with the runner that ships alongside alembic
+alembic-adapter-test -- python examples/example_adapter.py
+
+# a full converge cycle driven by the alembic cli (create, re-plan, update, delete)
+bash tests/e2e-alembic.sh
+```
+
+both need binaries from an [alembic release](https://github.com/cyberwitchery/alembic/releases)
+on your `PATH`; the e2e skips itself when `alembic` is missing.
 
 ## license
 

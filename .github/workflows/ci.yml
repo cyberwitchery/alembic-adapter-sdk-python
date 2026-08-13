@@ -13,6 +13,14 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # the alembic release the sdk is checked against. every release attaches static
+  # binaries, so the host checks below need no rust toolchain. bump this
+  # deliberately: a red run then means a real protocol break, not upstream noise.
+  ALEMBIC_VERSION: v0.8.0
+  # ubuntu-latest runners are x86_64.
+  ALEMBIC_TARGET: x86_64-unknown-linux-gnu
+
 jobs:
   test:
     name: test (py${{ matrix.python-version }})
@@ -68,27 +76,46 @@ jobs:
           python-version: "3.12"
       - name: install package
         run: pip install -e .
-      - uses: dtolnay/rust-toolchain@stable
-      - name: cache the conformance runner
-        id: cache
-        uses: actions/cache@v6
-        with:
-          path: bin/alembic-adapter-test
-          key: alembic-adapter-test-${{ runner.os }}-0.8.0
-      - name: build alembic-adapter-test
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: fetch alembic-adapter-test
         run: |
-          cargo install alembic-adapter-test --version "=0.8.0" --debug --locked \
-            --root "${RUNNER_TEMP}/cargo"
+          name="alembic-adapter-test-${ALEMBIC_VERSION}-${ALEMBIC_TARGET}"
+          curl -sSfL -o runner.tar.gz \
+            "https://github.com/cyberwitchery/alembic/releases/download/${ALEMBIC_VERSION}/${name}.tar.gz"
+          tar xzf runner.tar.gz
           mkdir -p bin
-          cp "${RUNNER_TEMP}/cargo/bin/alembic-adapter-test" bin/alembic-adapter-test
-          strip bin/alembic-adapter-test
+          mv "${name}/alembic-adapter-test" bin/
       - name: run conformance
         run: ./bin/alembic-adapter-test -- python examples/example_adapter.py
 
+  # the real host against this sdk: the alembic cli spawns an adapter written
+  # with the sdk and converges an inventory through plan/apply. every request the
+  # sdk parses here is one the host really produced, so a host-side shape change
+  # fails ci instead of waiting for a user to hit it.
+  e2e:
+    name: e2e (alembic)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: install package
+        run: pip install -e .
+      - name: fetch the alembic cli
+        run: |
+          name="alembic-${ALEMBIC_VERSION}-${ALEMBIC_TARGET}"
+          curl -sSfL -o alembic.tar.gz \
+            "https://github.com/cyberwitchery/alembic/releases/download/${ALEMBIC_VERSION}/${name}.tar.gz"
+          tar xzf alembic.tar.gz
+          mkdir -p "$HOME/.local/bin"
+          mv "${name}/alembic" "$HOME/.local/bin/alembic"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: run the alembic-driven e2e
+        run: bash tests/e2e-alembic.sh
+
   success:
     name: success
-    needs: [test, lint, build, conformance]
+    needs: [test, lint, build, conformance, e2e]
     runs-on: ubuntu-latest
     if: always()
     steps:
