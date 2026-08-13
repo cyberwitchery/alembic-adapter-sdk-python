@@ -271,6 +271,30 @@ class ModelParsingTests(unittest.TestCase):
         field = schema.types["dcim.interface"].fields["device"]
         self.assertEqual(field.type, FieldType(kind="ref", target="dcim.device"))
 
+    def test_schema_parses_field_type_nested_under_type(self):
+        # what a plan/apply request really carries: the host writes an inline
+        # composite type back out nested, with its own metadata keys beside it.
+        schema = Schema.from_json(
+            {
+                "types": {
+                    "dcim.interface": {
+                        "key": {"name": {"type": "slug", "required": False}},
+                        "fields": {
+                            "device": {
+                                "type": {"type": "ref", "target": "dcim.device"},
+                                "required": True,
+                                "nullable": False,
+                            }
+                        },
+                    }
+                }
+            }
+        )
+        field = schema.types["dcim.interface"].fields["device"]
+        self.assertEqual(field.type, FieldType(kind="ref", target="dcim.device"))
+        self.assertTrue(field.required)
+        self.assertEqual(schema.types["dcim.interface"].key["name"].type, FieldType(kind="slug"))
+
     def test_schema_parses_nested_list_item(self):
         schema = Schema.from_json(
             {

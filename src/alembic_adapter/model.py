@@ -86,10 +86,14 @@ class FieldSchema:
 
     @classmethod
     def from_json(cls, data: dict) -> FieldSchema:
-        # composite type info ("item"/"value"/"values"/"target") lives next to
-        # "type" in a FieldSchema, mirroring the host's deserializer.
+        # a composite type comes in one of two shapes, both of which the host
+        # accepts: written inline, its info ("item"/"value"/"values"/"target")
+        # sits next to "type" and the metadata keys, which is how inventory yaml
+        # spells it; nested, "type" holds the whole type object, which is how the
+        # host serializes a schema back out to us.
+        raw = data.get("type")
         return cls(
-            type=_field_type_from_obj(data),
+            type=FieldType.from_json(raw) if isinstance(raw, dict) else _field_type_from_obj(data),
             required=bool(data.get("required", False)),
             nullable=bool(data.get("nullable", False)),
             format=data.get("format"),
