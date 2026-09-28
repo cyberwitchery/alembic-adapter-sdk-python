@@ -59,7 +59,7 @@ schema:
     dcim.device:
       key: { name: { type: slug } }
       fields:
-        name:   { type: string }
+        name:   { type: slug }
         site:   { type: ref, target: dcim.site }
         status: { type: string }
 objects:
@@ -122,7 +122,7 @@ schema:
     dcim.device:
       key: { name: { type: slug } }
       fields:
-        name:   { type: string }
+        name:   { type: slug }
         site:   { type: ref, target: dcim.site }
         status: { type: string }
 objects:

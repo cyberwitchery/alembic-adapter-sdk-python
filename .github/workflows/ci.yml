@@ -17,7 +17,7 @@ env:
   # the alembic release the sdk is checked against. every release attaches static
   # binaries, so the host checks below need no rust toolchain. bump this
   # deliberately: a red run then means a real protocol break, not upstream noise.
-  ALEMBIC_VERSION: v0.8.0
+  ALEMBIC_VERSION: v0.10.0
   # ubuntu-latest runners are x86_64.
   ALEMBIC_TARGET: x86_64-unknown-linux-gnu
 
