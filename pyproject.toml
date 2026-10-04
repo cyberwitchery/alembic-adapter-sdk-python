@@ -31,6 +31,9 @@ dev = ["coverage[toml]", "ruff"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/alembic_adapter"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ["/sbom"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
