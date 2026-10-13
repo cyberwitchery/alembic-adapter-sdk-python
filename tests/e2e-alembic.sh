@@ -90,7 +90,7 @@ expect() { # <desc> <actual> <wanted>
 "$ALEMBIC" plan -f inv.yaml -o p1.json "${B[@]}" > p1.txt 2>&1
 expect "initial plan has 2 creates" "$(ops_count p1.json)" "2"
 expect "plan reports the previewed schema" \
-  "$(grep -c '^schema preview: 2 object types created$' p1.txt)" "1"
+  "$(grep -c '^schema preview: 2 object types would be created$' p1.txt)" "1"
 
 "$ALEMBIC" apply -p p1.json "${B[@]}" >/dev/null
 expect "apply wrote both objects to the store" "$(store 'len(s["objects"])')" "2"
