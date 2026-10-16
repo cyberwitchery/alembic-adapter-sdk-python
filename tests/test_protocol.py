@@ -18,6 +18,7 @@ from alembic_adapter import (
     Create,
     Delete,
     ExternalObject,
+    FieldChange,
     FieldType,
     Object,
     ProvisionReport,
@@ -34,6 +35,12 @@ DEVICE = {
     "key": {"name": "leaf01"},
     "attrs": {"name": "leaf01", "primary_ip": "198.51.100.1"},
 }
+DEVICE_OBJECT = Object(
+    uid=DEVICE["uid"],
+    type_name="dcim.device",
+    key={"name": "leaf01"},
+    attrs={"name": "leaf01", "primary_ip": "198.51.100.1"},
+)
 
 
 def call(adapter: Adapter, request: dict) -> dict:
@@ -114,12 +121,22 @@ class WriteTests(unittest.TestCase):
         adapter = RecordingAdapter()
         op = {"op": "create", "uid": DEVICE["uid"], "type_name": "dcim.device", "desired": DEVICE}
         resp = call(adapter, envelope("write", schema={"types": {}}, ops=[op]))
-        self.assertTrue(resp["ok"])
-        self.assertEqual(resp["result"]["applied"][0]["uid"], DEVICE["uid"])
-        self.assertEqual(resp["result"]["applied"][0]["backend_id"], "new-id")
+        self.assertEqual(
+            resp,
+            {
+                "ok": True,
+                "result": {
+                    "applied": [
+                        {"uid": DEVICE["uid"], "type_name": "dcim.device", "backend_id": "new-id"}
+                    ]
+                },
+            },
+        )
         # the parsed op is a Create carrying the full desired object.
-        self.assertIsInstance(adapter.seen_ops[0], Create)
-        self.assertEqual(adapter.seen_ops[0].desired.attrs["primary_ip"], "198.51.100.1")
+        self.assertEqual(
+            adapter.seen_ops,
+            [Create(uid=DEVICE["uid"], type_name="dcim.device", desired=DEVICE_OBJECT)],
+        )
 
     def test_update_op_carries_changes_and_backend_id(self):
         op = {
@@ -130,11 +147,16 @@ class WriteTests(unittest.TestCase):
             "changes": [{"field": "primary_ip", "from": "198.51.100.1", "to": "198.51.100.2"}],
             "backend_id": 42,
         }
-        parsed = op_from_json(op)
-        self.assertIsInstance(parsed, Update)
-        self.assertEqual(parsed.backend_id, 42)
-        self.assertEqual(parsed.changes[0].field, "primary_ip")
-        self.assertEqual(parsed.changes[0].to_value, "198.51.100.2")
+        self.assertEqual(
+            op_from_json(op),
+            Update(
+                uid=DEVICE["uid"],
+                type_name="dcim.device",
+                desired=DEVICE_OBJECT,
+                changes=[FieldChange("primary_ip", "198.51.100.1", "198.51.100.2")],
+                backend_id=42,
+            ),
+        )
 
     def test_delete_op_carries_key_and_backend_id(self):
         op = {
