@@ -291,9 +291,11 @@ class ProvisionReport:
     """Schema elements provisioned by ``ensure_schema``."""
 
     created_fields: list[str] = field(default_factory=list)
+    updated_fields: list[str] = field(default_factory=list)
     created_tags: list[str] = field(default_factory=list)
     created_object_types: list[str] = field(default_factory=list)
     created_object_fields: list[str] = field(default_factory=list)
+    updated_object_fields: list[str] = field(default_factory=list)
     deprecated_object_types: list[str] = field(default_factory=list)
     deprecated_object_fields: list[str] = field(default_factory=list)
     deleted_object_types: list[str] = field(default_factory=list)
@@ -305,8 +307,10 @@ class ProvisionReport:
         # omit the rest when empty to keep responses small.
         out: dict = {"created_fields": self.created_fields, "created_tags": self.created_tags}
         for name in (
+            "updated_fields",
             "created_object_types",
             "created_object_fields",
+            "updated_object_fields",
             "deprecated_object_types",
             "deprecated_object_fields",
             "deleted_object_types",

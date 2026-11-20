@@ -16,8 +16,9 @@ so you rarely touch the raw json.
 | `capabilities`   | nothing                    | `Capabilities`              |
 
 `preview_schema` is called at plan time to show what `ensure_schema` would
-provision without writing; return `None` (the default) if your adapter cannot
-preview.
+provision without writing. the default is an empty report, matching the default
+`ensure_schema`. `None` says the adapter cannot preview, and the host then
+refuses every apply unless `--allow-delete` is passed.
 
 `capabilities` is called once when the host constructs the backend. it reports
 the adapter's role: `adapter` (read+write, the default), `emitter` (write-only),

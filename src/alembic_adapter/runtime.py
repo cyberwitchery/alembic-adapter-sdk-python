@@ -28,9 +28,11 @@ from .model import (
 class Adapter:
     """Base class for an alembic external adapter.
 
-    Override the methods your backend supports. ``read`` defaults to returning
-    nothing (the right behaviour for emit-only adapters) and ``ensure_schema``
-    defaults to a no-op; ``write`` raises until you implement it.
+    Override the methods your backend supports. ``read`` and ``write`` raise
+    until you implement them, ``ensure_schema`` defaults to a no-op and
+    ``preview_schema`` to an empty report. A write-only adapter returns
+    ``Capabilities(role="emitter")`` from :meth:`capabilities`; the host never
+    asks it to read.
     """
 
     def setup(self, config: Any) -> None:
@@ -45,10 +47,15 @@ class Adapter:
         """Observe backend state for ``types``.
 
         Return one :class:`ExternalObject` per backend record. The engine diffs
-        these against the desired inventory to build a plan. Emit-only adapters
-        can leave this as the default empty result.
+        these against the desired inventory to build a plan. The default raises:
+        an empty result would plan every object as a create on every run. A
+        write-only adapter declares the ``emitter`` role instead, and the host
+        never calls ``read`` on it.
         """
-        return []
+        raise NotImplementedError(
+            "adapter does not implement read; "
+            'a write-only adapter returns Capabilities(role="emitter")'
+        )
 
     def write(self, schema: Schema, ops: list[Op], state: State) -> ApplyReport:
         """Apply plan operations to the backend.
@@ -66,16 +73,17 @@ class Adapter:
         """Preview what :meth:`ensure_schema` would provision, writing nothing.
 
         Called by the host at plan time so the plan can show pending schema
-        changes before apply. Return a :class:`ProvisionReport` describing the
-        creates/deletes ``ensure_schema`` would perform, or ``None`` if this
-        adapter cannot preview (the default), which the host reports as
-        "schema preview: unavailable for this backend".
+        changes before apply. Return a :class:`ProvisionReport` describing what
+        ``ensure_schema`` would create, update or delete. The default is an
+        empty report, which matches the default ``ensure_schema``.
 
         The report's ``deleted_object_types``/``deleted_object_fields`` feed
         the host's destructive-provisioning gate, so list any schema
-        ``ensure_schema`` would drop. A ``None`` result skips that gate.
+        ``ensure_schema`` would drop. ``None`` says the adapter cannot preview:
+        the host then cannot run that gate and refuses every apply unless
+        ``--allow-delete`` is passed.
         """
-        return None
+        return ProvisionReport()
 
     def capabilities(self) -> Capabilities:
         """Report which side of the adapter contract this adapter implements.
