@@ -51,7 +51,8 @@ class ExampleAdapter(Adapter):
     def read(self, schema: Schema, types: list[str], state: State) -> list[ExternalObject]:
         # TODO: query self.host and map each backend record into an
         # ExternalObject (its natural key, observed attrs, and backend_id).
-        # Emit-only adapters can just return [].
+        # a write-only adapter drops this method and returns
+        # Capabilities(role="emitter") from capabilities().
         return []
 
     def write(self, schema: Schema, ops: list[Op], state: State) -> ApplyReport:

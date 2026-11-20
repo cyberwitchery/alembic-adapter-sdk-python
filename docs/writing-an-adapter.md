@@ -35,9 +35,10 @@ read connection details and options.
 
 `read` observes backend state for the requested types and returns a list of
 `ExternalObject`. the engine diffs these against the desired inventory to build a
-plan. it defaults to returning nothing, which is the right behaviour for
-**emit-only** adapters (ones that just render an artifact) - every desired
-object then becomes a create.
+plan. the default raises: an empty result would plan every object as a create
+on every run. a **write-only** adapter (one that just renders an artifact)
+leaves `read` out and declares the `emitter` role in `capabilities`, below; the
+host then plans every desired object as a create and never calls `read`.
 
 `write` applies plan operations and returns an `ApplyReport`. dispatch on the op
 type with `isinstance`:
@@ -70,9 +71,11 @@ it defaults to a no-op; override it and return a `ProvisionReport` if your
 backend needs setting up first.
 
 `preview_schema` is called at plan time to show what `ensure_schema` would
-provision, writing nothing. it defaults to `None` ("cannot preview"); if you
-implement `ensure_schema`, implement this too and return the report it would
-produce. the report's `deleted_object_types`/`deleted_object_fields` feed the
+provision, writing nothing. it defaults to an empty report, matching the
+default `ensure_schema`; if you implement `ensure_schema`, implement this too
+and return the report it would produce. returning `None` says the adapter
+cannot preview, and the host then refuses every apply unless `--allow-delete`
+is passed. the report's `deleted_object_types`/`deleted_object_fields` feed the
 host's destructive-provisioning gate, so list any schema you would drop.
 
 `capabilities` reports which side of the contract the adapter implements. the

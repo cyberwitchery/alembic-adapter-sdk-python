@@ -42,8 +42,8 @@ class MyAdapter(Adapter):
 
     def read(self, schema, types, state):
         # observe backend state -> list[ExternalObject]; the engine diffs it
-        # against the desired inventory to build a plan. emit-only adapters
-        # return [] (the default).
+        # against the desired inventory to build a plan. a write-only adapter
+        # leaves this out and returns Capabilities(role="emitter") instead.
         return []
 
     def write(self, schema, ops, state):
@@ -83,8 +83,9 @@ the payload into typed objects and serializes your results back:
 | `capabilities`   | nothing                           | `Capabilities`                |
 
 `preview_schema` is called at plan time to show what `ensure_schema` would
-provision without writing; return `None` (the default) if your adapter cannot
-preview.
+provision without writing. the default is an empty report, matching the default
+`ensure_schema`. `None` says the adapter cannot preview, and the host then
+refuses every apply unless `--allow-delete` is passed.
 
 `capabilities` reports the adapter's role: `adapter` (read+write, the default),
 `emitter` (write-only), or `observer` (read-only), so the host can reject

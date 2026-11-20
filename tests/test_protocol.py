@@ -106,9 +106,11 @@ class ReadTests(unittest.TestCase):
             ],
         )
 
-    def test_read_default_is_empty(self):
+    def test_read_default_is_an_error(self):
+        # an empty read would plan every object as a create on every run.
         resp = call(Adapter(), envelope("read", schema={"types": {}}, types=[]))
-        self.assertEqual(resp, {"ok": True, "result": []})
+        self.assertFalse(resp["ok"])
+        self.assertIn('Capabilities(role="emitter")', resp["error"])
 
     def test_types_are_passed_through(self):
         adapter = RecordingAdapter()
@@ -190,11 +192,22 @@ class EnsureSchemaTests(unittest.TestCase):
 
 
 class PreviewSchemaTests(unittest.TestCase):
-    def test_default_preview_schema_is_null(self):
-        # the default adapter cannot preview: a null result is the canonical
-        # "unavailable" signal the host maps to Ok(None).
+    def test_default_preview_schema_is_an_empty_report(self):
+        # a null result would make the host refuse every apply without --allow-delete.
         resp = call(Adapter(), envelope("preview_schema", schema={"types": {}}))
-        self.assertEqual(resp, {"ok": True, "result": None})
+        self.assertEqual(resp, {"ok": True, "result": {"created_fields": [], "created_tags": []}})
+
+    def test_provision_report_carries_updated_fields(self):
+        report = ProvisionReport(updated_fields=["a"], updated_object_fields=["b"])
+        self.assertEqual(
+            report.to_json(),
+            {
+                "created_fields": [],
+                "created_tags": [],
+                "updated_fields": ["a"],
+                "updated_object_fields": ["b"],
+            },
+        )
 
     def test_preview_schema_returns_report_when_implemented(self):
         class Previewing(Adapter):
